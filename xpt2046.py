@@ -1,7 +1,6 @@
 from time import sleep
 
-class Touch(object):
-    # Serial interface for XPT2046 Touch Screen Controller.
+class Touch(object): # Serial interface for XPT2046 Touch Screen Controller.
     # Command constants from ILI9341 datasheet
     GET_X = const(0b11010000)  # X position
     GET_Y = const(0b10010000)  # Y position
@@ -65,7 +64,6 @@ class Touch(object):
                 buff[buffptr] = sample  # put in buff
                 buffptr = (buffptr + 1) % buf_length  # Incr, until rollover
                 nsamples = min(nsamples + 1, buf_length)  # Incr. until max
-
             sleep(.05)
             timeout -= .05
         return None
@@ -75,7 +73,6 @@ class Touch(object):
         if not pin.value() and not self.int_locked:
             self.int_locked = True  # Lock Interrupt
             buff = self.raw_touch()
-
             if buff is not None:
                 x, y = self.normalize(*buff)
                 self.int_handler(x, y)
@@ -99,8 +96,7 @@ class Touch(object):
         else:
             return None
 
-    def send_command(self, command):
-        # Write command to XT2046 (MicroPython). Args: command (byte): XT2046 command code. Returns: int: 12 bit response
+    def send_command(self, command): # Write command to XT2046 (MicroPython). Args: command (byte): XT2046 command code. Returns: int: 12 bit response
         self.tx_buf[0] = command
         self.cs(0)
         self.spi.write_readinto(self.tx_buf, self.rx_buf)
