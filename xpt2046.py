@@ -1,10 +1,7 @@
-"""XPT2046 Touch module."""
 from time import sleep
 
-
 class Touch(object):
-    """Serial interface for XPT2046 Touch Screen Controller."""
-
+    # Serial interface for XPT2046 Touch Screen Controller.
     # Command constants from ILI9341 datasheet
     GET_X = const(0b11010000)  # X position
     GET_Y = const(0b10010000)  # Y position
@@ -18,20 +15,7 @@ class Touch(object):
     def __init__(self, spi, cs, int_pin=None, int_handler=None,
                  width=320, height=240,
                  x_min=100, x_max=1962, y_min=100, y_max=1900):
-        """Initialize touch screen controller.
-
-        Args:
-            spi (Class Spi):  SPI interface for OLED
-            cs (Class Pin):  Chip select pin
-            int_pin (Class Pin):  Touch controller interrupt pin
-            int_handler (function): Handler for screen interrupt
-            width (int): Width of LCD screen
-            height (int): Height of LCD screen
-            x_min (int): Minimum x coordinate
-            x_max (int): Maximum x coordinate
-            y_min (int): Minimum Y coordinate
-            y_max (int): Maximum Y coordinate
-        """
+        # Initialize touch screen controller. Args: spi (Class Spi):  SPI interface for OLED, cs (Class Pin):  Chip select pin, int_pin (Class Pin):  Touch controller interrupt pin, int_handler (function): Handler for screen interrupt, width (int): Width of LCD screen, height (int): Height of LCD screen, x_min (int): Minimum x coordinate, x_max (int): Maximum x coordinate, y_min (int): Minimum Y coordinate, y_max (int): Maximum Y coordinate
         self.spi = spi
         self.cs = cs
         self.cs.init(self.cs.OUT, value=1)
@@ -58,7 +42,7 @@ class Touch(object):
                         handler=self.int_press)
 
     def get_touch(self):
-        """Take multiple samples to get accurate touch reading."""
+        # Take multiple samples to get accurate touch reading.
         timeout = 2  # set timeout to 2 seconds
         confidence = 5
         buff = [[0, 0] for x in range(confidence)]
@@ -87,7 +71,7 @@ class Touch(object):
         return None
 
     def int_press(self, pin):
-        """Send X,Y values to passed interrupt handler."""
+        # Send X,Y values to passed interrupt handler.
         if not pin.value() and not self.int_locked:
             self.int_locked = True  # Lock Interrupt
             buff = self.raw_touch()
@@ -101,17 +85,13 @@ class Touch(object):
             self.int_locked = False  # Unlock interrupt
 
     def normalize(self, x, y):
-        """Normalize mean X,Y values to match LCD screen."""
+        # Normalize mean X,Y values to match LCD screen.
         x = int(self.x_multiplier * x + self.x_add)
         y = int(self.y_multiplier * y + self.y_add)
         return x, y
 
     def raw_touch(self):
-        """Read raw X,Y touch values.
-
-        Returns:
-            tuple(int, int): X, Y
-        """
+        # Read raw X,Y touch values. Returns: tuple(int, int): X, Y
         y = self.send_command(self.GET_X)
         x = self.send_command(self.GET_Y)
         if self.x_min <= x <= self.x_max and self.y_min <= y <= self.y_max:
@@ -120,16 +100,9 @@ class Touch(object):
             return None
 
     def send_command(self, command):
-        """Write command to XT2046 (MicroPython).
-
-        Args:
-            command (byte): XT2046 command code.
-        Returns:
-            int: 12 bit response
-        """
+        # Write command to XT2046 (MicroPython). Args: command (byte): XT2046 command code. Returns: int: 12 bit response
         self.tx_buf[0] = command
         self.cs(0)
         self.spi.write_readinto(self.tx_buf, self.rx_buf)
         self.cs(1)
-
         return (self.rx_buf[1] << 4) | (self.rx_buf[2] >> 4)
