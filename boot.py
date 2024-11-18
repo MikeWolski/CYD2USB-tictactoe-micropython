@@ -27,7 +27,7 @@ class Demo(object):
         # Display initial message
         self.display.draw_text8x8(self.display.width // 2 - 32,
                                   self.display.height - 9,
-                                  "TOUCH ME",
+                                  "TIC-TAC-TOE",
                                   self.WHITE,
                                   background=self.PURPLE)
 
@@ -39,14 +39,14 @@ class Demo(object):
         print("Display touched.")
         
         # Y needs to be flipped
-        y = (self.display.height - 1) - y
+        # y = (self.display.height - 1) - y
         # Display coordinates
         self.display.draw_text8x8(self.display.width // 2 - 32,
                                   self.display.height - 9,
                                   "{0:03d}, {1:03d}".format(x, y),
                                   self.CYAN)
         # Draw dot
-        self.display.draw_sprite(self.dot, x - 2, y - 2, 5, 5)
+        self.display.draw_circle(x - 5, y - 5, 5, 41404)
 
 
 def test():

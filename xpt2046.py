@@ -16,7 +16,7 @@ class Touch(object):
     GET_AUX = const(0b11100000)  # Auxiliary input to ADC
 
     def __init__(self, spi, cs, int_pin=None, int_handler=None,
-                 width=240, height=320,
+                 width=320, height=240,
                  x_min=100, x_max=1962, y_min=100, y_max=1900):
         """Initialize touch screen controller.
 
@@ -112,8 +112,8 @@ class Touch(object):
         Returns:
             tuple(int, int): X, Y
         """
-        x = self.send_command(self.GET_X)
-        y = self.send_command(self.GET_Y)
+        y = self.send_command(self.GET_X)
+        x = self.send_command(self.GET_Y)
         if self.x_min <= x <= self.x_max and self.y_min <= y <= self.y_max:
             return (x, y)
         else:
