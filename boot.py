@@ -2,13 +2,13 @@ from ili9341 import Display, color565
 from xpt2046 import Touch
 from machine import idle, Pin, SPI
 
-
 class TicTacToe:
     CYAN = color565(0, 255, 255)
     PURPLE = color565(255, 0, 255)
     WHITE = color565(255, 255, 255)
     RED = color565(255, 0, 0)
     BLUE = color565(0, 0, 255)
+    BLACK = color565(0, 0, 0)
     GRID_COLOR = color565(50, 50, 50)
 
     def __init__(self, display, spi2):
@@ -18,8 +18,8 @@ class TicTacToe:
         self.current_player = "X"  # Start with player "X"
         self.cell_width = self.display.width // 3
         self.cell_height = self.display.height // 3
-        self.draw_grid()
         self.game_over = False
+        self.draw_grid()
 
     def draw_grid(self):
         for i in range(1, 3):
@@ -27,26 +27,6 @@ class TicTacToe:
             self.display.draw_hline(0, i * self.cell_height, self.display.width, self.GRID_COLOR)
             # Vertical lines
             self.display.draw_vline(i * self.cell_width, 0, self.display.height, self.GRID_COLOR)
-
-    def touchscreen_press(self, x, y):
-        if self.game_over:
-            return
-
-        col = x // self.cell_width
-        row = y // self.cell_height
-
-        if self.grid[row][col] is None:
-            self.grid[row][col] = self.current_player
-            self.draw_symbol(row, col, self.current_player)
-
-            if self.check_winner():
-                self.display.draw_text8x8(10, self.display.height - 20, f"{self.current_player} WINS!", self.CYAN)
-                self.game_over = True
-            elif self.check_draw():
-                self.display.draw_text8x8(10, self.display.height - 20, "DRAW!", self.CYAN)
-                self.game_over = True
-            else:
-                self.current_player = "O" if self.current_player == "X" else "X"
 
     def draw_symbol(self, row, col, player):
         center_x = col * self.cell_width + self.cell_width // 2
@@ -58,23 +38,62 @@ class TicTacToe:
         elif player == "O":
             self.display.draw_circle(center_x, center_y, 10, self.BLUE)
 
+    def reset_game(self):
+        self.grid = [[None for _ in range(3)] for _ in range(3)]  # Reset the board
+        self.current_player = "X"  # Reset to player "X"
+        self.game_over = False
+        self.display.clear()
+        self.draw_grid()  # Redraw the grid
+
+    def touchscreen_press(self, x, y):
+        if self.game_over:
+            self.reset_game()
+            return
+
+        col = x // self.cell_width
+        row = y // self.cell_height
+
+        if self.grid[row][col] is None:
+            self.grid[row][col] = self.current_player
+            self.draw_symbol(row, col, self.current_player)
+
+            if self.check_winner():
+                self.draw_game_over_message(f"{self.current_player} WINS!")
+                self.game_over = True
+            elif self.check_draw():
+                self.draw_game_over_message("DRAW!")
+                self.game_over = True
+            else:
+                self.current_player = "O" if self.current_player == "X" else "X"
+
     def check_winner(self):
         # Check rows, columns, and diagonals for a win
         for i in range(3):
-            if self.grid[i][0] == self.grid[i][1] == self.grid[i][2] and self.grid[i][0] is not None:
+            if self.check_line(self.grid[i][0], self.grid[i][1], self.grid[i][2]):
                 return True
-            if self.grid[0][i] == self.grid[1][i] == self.grid[2][i] and self.grid[0][i] is not None:
+            if self.check_line(self.grid[0][i], self.grid[1][i], self.grid[2][i]):
                 return True
 
-        if self.grid[0][0] == self.grid[1][1] == self.grid[2][2] and self.grid[0][0] is not None:
+        # Check diagonals
+        if self.check_line(self.grid[0][0], self.grid[1][1], self.grid[2][2]):
             return True
-        if self.grid[0][2] == self.grid[1][1] == self.grid[2][0] and self.grid[0][2] is not None:
+        if self.check_line(self.grid[0][2], self.grid[1][1], self.grid[2][0]):
             return True
 
         return False
 
+    def check_line(self, cell1, cell2, cell3):
+        return cell1 == cell2 == cell3 and cell1 is not None
+
     def check_draw(self):
         return all(cell is not None for row in self.grid for cell in row)
+
+    def draw_game_over_message(self, message):
+        self.display.draw_text8x8(10, self.display.height - 40, message, self.CYAN)
+        self.display.draw_text8x8(10, self.display.height - 20, "Press anywhere to restart", self.CYAN)
+
+    def go_to_sleep(self):
+        idle()  # Put ESP32 to sleep when idle
 
 
 def main():
@@ -89,7 +108,7 @@ def main():
 
     try:
         while True:
-            idle()
+            game.go_to_sleep()  # Put the ESP32 to sleep when idle
 
     except KeyboardInterrupt:
         print("\nCtrl-C pressed. Cleaning up and exiting...")
